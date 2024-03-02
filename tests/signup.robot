@@ -1,0 +1,95 @@
+*** Settings ***
+Documentation        Cenários de testes do cadastro de usuários
+
+Resource       ../resources/base.resource
+
+Suite Setup    Log    Tudo aqui ocorre antes da Suite (antes de todos os testes)
+Suite Teardown    Log    Tudo aqui ocorre depois da Suite (depois de todos os testes)
+
+Test Setup    Start Session
+Test Teardown    Take Screenshot
+
+*** Test Cases ***
+Deve poder cadastrar um novo usuários
+
+    ${user}    Create Dictionary
+    ...        name=Marcos Silva    
+    ...        email=marcossilva@gmail.com    
+    ...        password=pwd123
+
+    Remove user from database    ${user}[email]
+
+    Go to signup page
+    Submit signup form      ${user}
+    Notice should be        Boas vindas ao Mark85, o seu gerenciador de tarefas.
+    Sleep    2
+
+Não deve permitir o cadastro com email duplicado
+    [Tags]    dup
+
+    ${user}    Create Dictionary
+    ...        name=Marcos Antonio   
+    ...        email=marcosantonio@gmail.com   
+    ...        password=pwd123
+
+
+    Remove user from database    ${user}[email]
+
+    Insert user from database    ${user}
+
+    Go to signup page
+    Submit signup form      ${user}
+    Notice should be        Oops! Já existe uma conta com o e-mail informado.
+    Sleep    2
+    
+    
+
+Campos obrigatórios
+
+    [Tags]    required
+
+    ${user}    Create Dictionary
+    ...        name=${EMPTY}
+    ...        email=${EMPTY}
+    ...        password=${EMPTY}    
+
+    Go to signup page
+    Submit signup form    ${user}
+
+    Alert should be    Informe seu nome completo
+    Alert should be    Informe seu e-email
+    Alert should be    Informe uma senha com pelo menos 6 digitos
+    Sleep    2
+
+
+Não deve cadastrar com email incorreto
+
+    ${user}    Create Dictionary
+    ...    name=Charles Xavier
+    ...    email=xavier.com.br
+    ...    password=123456
+
+    Go to signup page
+    Submit signup form    ${user}
+
+    Alert should be    Digite um e-mail válido
+    Sleep    2
+
+Não deve cadastar com senha curto curta
+    
+    @{password_list}    Create List    1    12    123    1234    12345
+
+    FOR  ${password}  IN  @{password_list}
+        ${user}    Create Dictionary
+        ...        name=Marcos Silva    
+        ...        email=Marcossilva@gmail.com
+        ...        password=${password}
+    Sleep    1
+    Go to signup page
+    Submit signup form    ${user}
+
+    Alert should be    Informe uma senha com pelo menos 6 digitos
+    
+    END
+    
+    Sleep    2
